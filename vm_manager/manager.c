@@ -25,7 +25,7 @@ int create_vm(void)
     if (vmfd == -1)
         err(1, "Cannot create VM");
 
-    return 0; [cite_start] //[cite: 12]
+    return vmfd; //[cite: 12]
 }
 
 /***
