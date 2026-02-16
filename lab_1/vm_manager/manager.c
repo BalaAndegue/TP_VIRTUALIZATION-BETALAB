@@ -22,8 +22,22 @@ int create_vm(void)
  */
 int create_guest_physical_memory(size_t size)
 {
-    int ret = -1;
+    /*int ret = -1;
     return ret;
+    */
+    // 1. ouvrir le module KVM pour obtenir un descripteur de fichier systeme
+    kvmfd = open(DEV_KVM, O_RDWR | O_CLOEXEC);
+    if (kvmfd < 0)
+        err(1, "Cannot open KVM device");
+
+    // 2. creer l'instance de la VM . cela retoune un descripteur de fichier (vmfd)
+    // qui represente la VM elle-meme
+    vmfd = ioctl(kvmfd, KVM_CREATE_VM, 0);
+    if (vmfd < 0)
+        err(1, "Cannot create VM");
+
+    return vmfd;
+
 }
 
 int create_bootstrap()
