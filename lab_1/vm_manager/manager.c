@@ -34,22 +34,22 @@ int create_vm(void)
  */
 int create_guest_physical_memory(size_t size)
 {
-    /*int ret = -1;
-    return ret;
-    */
-    // 1. ouvrir le module KVM pour obtenir un descripteur de fichier systeme
-    kvmfd = open(DEV_KVM, O_RDWR | O_CLOEXEC);
-    if (kvmfd < 0)
-        err(1, "Cannot open KVM device");
+    struct kvm_userspace_memory_region region;
 
-    // 2. creer l'instance de la VM . cela retoune un descripteur de fichier (vmfd)
-    // qui represente la VM elle-meme
-    vmfd = ioctl(kvmfd, KVM_CREATE_VM, 0);
-    if (vmfd < 0)
-        err(1, "Cannot create VM");
+    // 1. Allouer un bloc de mémoire dans notre programme C (l'Hôte)
+    // On utilise mmap pour avoir une zone de mémoire alignée et propre.
+    memory = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if (memory == MAP_FAILED) err(1, "mmap memory");
 
-    return vmfd;
+    // 2. Définir la région mémoire pour KVM
+    region.slot = slot_id++;          // Identifiant de la zone (0 pour la RAM principale)
+    region.flags = 0;                 // Pas de flags particuliers (ex: Read Only)
+    region.guest_phys_addr = 0x0;      // L'adresse de départ vue par la VM
+    region.memory_size = size;        [cite_start]// Taille (VM_MEMORY_SIZE = 0xF000) [cite: 23]
+    region.userspace_addr = (uint64_t)memory; // Adresse réelle dans votre code C
 
+    // 3. Envoyer cette configuration à KVM
+    return ioctl(vmfd, KVM_SET_USER_MEMORY_REGION, &region);
 }
 
 int create_bootstrap()
