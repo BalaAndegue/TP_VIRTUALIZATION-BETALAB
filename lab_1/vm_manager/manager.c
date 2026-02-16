@@ -11,8 +11,20 @@ int slot_id = 0;
  */
 int create_vm(void)
 {
+    /*
     int ret = -1;
     return ret;
+    */
+    // 1. Ouvrir le module KVM pour obtenir un descripteur système
+    kvmfd = open(DEV_KVM, O_RDWR | O_CLOEXEC);
+    if (kvmfd == -1) err(1, "Impossible d'ouvrir /dev/kvm");
+
+    // 2. Créer l'instance de la VM. Cela retourne un descripteur de fichier (vmfd)
+    // qui représente l'ordinateur virtuel lui-même.
+    vmfd = ioctl(kvmfd, KVM_CREATE_VM, (unsigned long)0);
+    if (vmfd == -1) err(1, "KVM_CREATE_VM");
+
+    return vmfd; 
 }
 
 /***
