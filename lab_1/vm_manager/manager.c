@@ -100,27 +100,36 @@ int launch_vm()
 {
     int ret;
     struct kvm_regs regs;
+    
+    // 1. Lire l'état actuel des registres (qui sont vides à la création)
     ioctl(vcpufd, KVM_GET_REGS, &regs);
 
     /* Update Of The vCPU Registers - RAX, RBX and RIP */
-    regs.rflags = 2;
-    // regs.rax = ...;
-    // regs.rbx = ...;
-    // regs.rip = ...;
+    regs.rflags = 2;   // Requis pour l'architecture x86 (bit réservé)
+    
+    // Pour que le binaire fasse "2 + 4 = 6" :
+    regs.rax = 2;      // Valeur initiale dans EAX
+    regs.rbx = 4;      // Valeur initiale dans EBX
+    
+    // Le pointeur d'instruction (RIP) doit pointer sur l'adresse 0,
+    // car c'est là que load_vm_code a copié le binaire.
+    regs.rip = 0;      [cite_start]// [cite: 81-83]
 
+    // 2. Sauvegarder ces valeurs dans le vCPU
     ret = ioctl(vcpufd, KVM_SET_REGS, &regs);
-    if (ret == -1)
-        err(1, "KVM_SET_REGS");
+    if (ret == -1) err(1, "KVM_SET_REGS");
 
+    // 3. Boucle d'exécution
     while (1)
     {
-
+        // On demande à KVM de faire tourner le processeur
         if (ioctl(vcpufd, KVM_RUN, NULL) == -1)
             err(1, "KVM_RUN");
         else
         {
+            // Dès qu'il y a un VM Exit, le handler analyse la raison
             if (vmexit_handler(run->exit_reason) == 0)
-                break;
+                break; // Arrêt si HLT est reçu
         }
     }
     return 0;
