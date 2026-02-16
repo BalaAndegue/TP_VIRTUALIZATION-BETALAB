@@ -32,7 +32,7 @@ int main(int argc, char *argv)
     load_vm_code(code);
 
     /* Runs The VM */
-    launch_vm();
+    launch_vm(2, 4, 0);
     
     return 0;
 }
