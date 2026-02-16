@@ -2,6 +2,7 @@
 #define __MANAGER__
 #pragma once
 #include "../load_manager/loader.h"
+#include "../syscall_manager/syscall_handler.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -68,9 +69,9 @@ struct tss_entry_struct
 typedef struct tss_entry_struct tss_entry_t;
 
 int create_vm(void);
-int create_guest_physical_memory(size_t);
+int add_memory(size_t, uint64_t);
 int create_bootstrap();
-int launch_vm();
+int launch_vm(uint64_t, uint64_t, uint64_t);
 int vmexit_handler(int);
 uint8_t *get_memory(void);
 int setup_tss(uint32_t);
