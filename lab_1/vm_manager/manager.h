@@ -2,7 +2,7 @@
 #define __MANAGER__
 #pragma once
 #include "../load_manager/loader.h"
-#include "../syscall_manager/syscall_handler.h"
+//#include "../syscall_manager/syscall_handler.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -77,4 +77,6 @@ uint8_t *get_memory(void);
 int setup_tss(uint32_t);
 int ident_paging(uint8_t *);
 void setup_idt();
+int create_guest_physical_memory(size_t size);
+
 #endif

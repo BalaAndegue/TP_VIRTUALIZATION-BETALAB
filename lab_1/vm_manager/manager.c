@@ -15,16 +15,16 @@ int create_vm(void)
     int ret = -1;
     return ret;
     */
-    // 1. Ouvrir le module KVM pour obtenir un descripteur système
+    //ouvrir le module KVM pour obtenir le descripteur de fichier systeme
     kvmfd = open(DEV_KVM, O_RDWR | O_CLOEXEC);
     if (kvmfd == -1) err(1, "Impossible d'ouvrir /dev/kvm");
 
-    // 2. Créer l'instance de la VM. Cela retourne un descripteur de fichier (vmfd)
+    // Créer l'instance de la VM. Cela retourne un descripteur de fichier (vmfd)
     // qui représente l'ordinateur virtuel lui-même.
     vmfd = ioctl(kvmfd, KVM_CREATE_VM, (unsigned long)0);
     if (vmfd == -1) err(1, "KVM_CREATE_VM");
 
-    return vmfd; 
+    return vmfd;
 }
 
 /***
@@ -45,7 +45,7 @@ int create_guest_physical_memory(size_t size)
     region.slot = slot_id++;          // Identifiant de la zone (0 pour la RAM principale)
     region.flags = 0;                 // Pas de flags particuliers (ex: Read Only)
     region.guest_phys_addr = 0x0;      // L'adresse de départ vue par la VM
-    region.memory_size = size;        [cite_start]// Taille (VM_MEMORY_SIZE = 0xF000) [cite: 23]
+    region.memory_size = size;        // Taille (VM_MEMORY_SIZE = 0xF000) [cite: 23]
     region.userspace_addr = (uint64_t)memory; // Adresse réelle dans votre code C
 
     // 3. Envoyer cette configuration à KVM
@@ -96,7 +96,7 @@ int create_bootstrap()
  * TODO
  * This Function Updates vCPU Registers And Runs It.
  */
-int launch_vm()
+int launch_vm(uint64_t rax, uint64_t rbx, uint64_t rip)
 {
     int ret;
     struct kvm_regs regs;
@@ -108,12 +108,12 @@ int launch_vm()
     regs.rflags = 2;   // Requis pour l'architecture x86 (bit réservé)
     
     // Pour que le binaire fasse "2 + 4 = 6" :
-    regs.rax = 2;      // Valeur initiale dans EAX
-    regs.rbx = 4;      // Valeur initiale dans EBX
-    
+    regs.rax = rax;      // Valeur initiale dans EAX
+    regs.rbx = rbx;      // Valeur initiale dans EBX
+
     // Le pointeur d'instruction (RIP) doit pointer sur l'adresse 0,
     // car c'est là que load_vm_code a copié le binaire.
-    regs.rip = 0;      [cite_start]// [cite: 81-83]
+    regs.rip = rip;      // Valeur initiale dans RIP
 
     // 2. Sauvegarder ces valeurs dans le vCPU
     ret = ioctl(vcpufd, KVM_SET_REGS, &regs);
