@@ -119,6 +119,11 @@ int vmexit_handler(int exit_reason)
     case KVM_EXIT_HLT:
         return syscall_handler(memory, vcpufd);
     case KVM_EXIT_IO:
+        if (run->io.port == 0x80) { 
+            dump_vm_state("vm_image.bin");
+            return 0; // On retourne 0 pour casser la boucle while(1) de launch_vm 
+        }
+     
         if (run->io.direction == KVM_EXIT_IO_OUT && run->io.size == 1 && run->io.port == 0x3f8 && run->io.count == 1)
         {
             printf("KVM_EXIT_IO: ");
@@ -146,4 +151,40 @@ int vmexit_handler(int exit_reason)
 uint8_t *get_memory()
 {
     return memory;
+}
+
+
+/* --- Nouvelle fonction : dump_vm_state --- */
+int dump_vm_state(const char *filename) {
+    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if (fd < 0) {
+        perror("Erreur OPEN image");
+        return -1;
+    }
+
+    struct VMState state;
+    // 1. Capture des différents types de registres 
+    if (ioctl(vcpufd, KVM_GET_REGS, &state.regs) < 0) err(1, "GET_REGS");
+    if (ioctl(vcpufd, KVM_GET_SREGS, &state.sregs) < 0) err(1, "GET_SREGS");
+    if (ioctl(vcpufd, KVM_GET_FPU, &state.fpu) < 0) err(1, "GET_FPU");
+
+    // 2. Définition de la taille mémoire à sauvegarder
+    state.memory_size = 0xF000; // Taille physique du Lab 
+
+    // 3. Écriture séquentielle des structures 
+    write(fd, &state.regs, sizeof(state.regs));
+    write(fd, &state.sregs, sizeof(state.sregs));
+    write(fd, &state.fpu, sizeof(state.fpu));
+    write(fd, &state.memory_size, sizeof(size_t));
+
+    // 4. Dump du bloc mémoire physique complet 
+    if (write(fd, memory, state.memory_size) != (ssize_t)state.memory_size) {
+        perror("Erreur WRITE mémoire");
+        close(fd);
+        return -1;
+    }
+
+    close(fd);
+    printf("SAVE OPERATION : État de la VM sauvegardé dans %s\n", filename);
+    return 0;
 }

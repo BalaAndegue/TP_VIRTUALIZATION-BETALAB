@@ -6,6 +6,9 @@
 /* TODO */
 void SAVE()
 {
+    //on utilise un port specifique pour signaler la migration au VM 
+    // Le port 0x80 est souvent utilise pour des codes de diagnostic/debug
+    asm volatile("outb %0, $0x80" : : "a"(0));
 }
 
 char *buff_1 = "Hello World !!!\n";

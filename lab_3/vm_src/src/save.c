@@ -24,6 +24,9 @@ int main(int argc, char *argv)
     uint64_t app_entry_point = load_file("bin/app_img");
 
     launch_vm(boot_entry_point, app_entry_point, STACK_ADDRESS);
-    
+
+    //apres que la VM s'est arretée, on peut sauvegarder son état
+    dump_vm_state("vm_state.bin", VM_MEMORY_SIZE);
+
     return 0;
 }

@@ -68,6 +68,14 @@ struct tss_entry_struct
 } __attribute__((packed));
 typedef struct tss_entry_struct tss_entry_t;
 
+struct VMState {
+	struct kvm_regs regs;
+	struct kvm_sregs sregs;
+	struct kvm_fpu fpu;
+	size_t memory_size;
+	uint8_t *memory;
+};
+
 int create_vm(void);
 int add_memory(size_t, uint64_t);
 int create_bootstrap();
